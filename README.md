@@ -9,9 +9,7 @@ An example workflow using the action:
 ```yaml
 name: Is Organization Member Example
 
-on:
-  issues:
-    types: [opened, labeled]
+on: pull_request_target
 
 jobs:
   welcome:
@@ -20,20 +18,15 @@ jobs:
     steps:
       - name: Check if organization member
         id: is_organization_member
-        if: github.event.action == 'opened'
-        uses: jamessingleton/is-organization-member@v1
+        uses: radtriste/is-organization-member@kiegroup_use
         with:
-          organization: testorg
+          organization: kiegroup
           username: ${{ github.event.issue.user.login }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create Comment
+          token: ${{ secrets.SECRET_WITH_READ_ORG_TOKEN }}
+      - name: Debug log
         if: |
           steps.is_organization_member.outputs.result == false
-        run: echo User Does Not Belong to testorg
+        run: echo User Does Not Belong to kiegroup
 ```
 
-> **Note:** In order to check whether a member is part of the organization
-> or not, the members **must** have their "Organization Visibility" set to
-> Public.
-> In order to ensure your "Organization Visibility" is correct, please,
-> check https://github.com/orgs/**your_organization**/people.
+> **Note:** The used secret `SECRET_WITH_READ_ORG_TOKEN` does only need the `read:org` scope from the organization you try to read.

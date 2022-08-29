@@ -15,16 +15,35 @@ const octokit = new github.getOctokit(token);
 main();
 
 async function main() {
-  const { data: orgs } = checkStatus(
-    await octokit.rest.orgs.listForUser({ username, per_page: 100 })
-  );
+  core.info("username= "+username)
+  core.info("organization= "+organization)
 
-  const isMember = orgs.some(({ login }) => login === organization);
+  const parameters = { 
+    org: organization, 
+    filter: 'all',
+    role: 'all',
+    per_page: 100 
+  }
+  core.setOutput("result", "false");
+  for await (const response of octokit.paginate.iterator(
+    octokit.rest.orgs.listMembers,
+    parameters
+  )) {
+    const result = checkStatus(response)
+    const members = result.data;
+    console.log("%d members found", members.length);
+    const isMember = members.some(({ login }) => login === username);
 
-  core.setOutput("result", isMember ? "true" : "false");
+    if (isMember) {
+      core.setOutput("result", "true");
+      break
+    }
+  }
 }
 
 function checkStatus(result) {
+  core.info('check Status of response')
+  core.info('status received = ' + result.status)
   if (result.status >= 200 && result.status < 300) {
     return result;
   }
